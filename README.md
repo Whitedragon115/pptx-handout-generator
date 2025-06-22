@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PPTX 講義生成器
 
-## Getting Started
+這是一個基於 Next.js 的 Web 應用程式，可以將 PowerPoint 檔案轉換成講義格式的 PDF。
 
-First, run the development server:
+## 功能特點
+
+- 📤 **檔案上傳**: 支援拖放和點擊上傳 PPTX 檔案
+- 🖼️ **投影片轉圖片**: 將每頁投影片轉換為高品質圖片
+- 📝 **演講者備註提取**: 自動提取每頁的演講者備註
+- 📄 **PDF 講義生成**: 生成左側圖片、右側備註的講義格式 PDF
+- 👁️ **線上預覽**: 在瀏覽器中預覽講義效果
+- 🎨 **響應式設計**: 支援桌面和行動設備
+
+## 系統需求
+
+### 前端應用
+- Node.js 18+ 
+- npm 或 yarn
+
+### 後端轉換服務
+- Docker (用於運行 PPTX 轉換 API)
+- 轉換 API 運行在 `http://localhost:5000`
+
+## 安裝和設置
+
+### 1. 前端應用設置
 
 ```bash
+# 安裝依賴
+npm install
+
+# 啟動開發伺服器
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+應用將在 `http://localhost:3000` 啟動。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. 後端轉換服務設置
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+確保您的 PPTX 轉換 API 正在 `http://localhost:5000` 運行。
 
-## Learn More
+## 使用方法
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **上傳檔案**: 點擊或拖放 PPTX 檔案到上傳區域
+2. **處理檔案**: 點擊「開始處理」按鈕
+3. **預覽結果**: 使用「預覽模式」查看講義格式
+4. **下載 PDF**: 點擊「下載 PDF」按鈕獲取講義文件
