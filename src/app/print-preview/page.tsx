@@ -15,6 +15,7 @@ export default function PrintPreviewPage() {
   const [editableNotes, setEditableNotes] = useState<{ [key: number]: string }>({});
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
+  
   useEffect(() => {
     // 從 URL 參數或 localStorage 獲取投影片資料
     const slidesData = searchParams.get('slides');
@@ -29,7 +30,7 @@ export default function PrintPreviewPage() {
         });
         setEditableNotes(initialNotes);
       } catch (error) {
-        console.error('解析投影片資料失敗:', error);
+        // 解析失敗 - 靜默處理
       }
     } else {
       // 嘗試從 localStorage 獲取
@@ -45,23 +46,12 @@ export default function PrintPreviewPage() {
           });
           setEditableNotes(initialNotes);
         } catch (error) {
-          console.error('從 localStorage 獲取投影片資料失敗:', error);
+          // 從 localStorage 獲取失敗 - 靜默處理
         }
       }
     }
     setLoading(false);
   }, [searchParams]);
-
-  useEffect(() => {
-    // 頁面載入完成後自動觸發列印對話框
-    if (!loading && slides.length > 0) {
-      const timer = setTimeout(() => {
-        window.print();
-      }, 1000); // 延遲 1 秒讓內容完全載入
-
-      return () => clearTimeout(timer);
-    }
-  }, [loading, slides]);
 
   const handleNotesChange = (slideNumber: number, newNotes: string) => {
     setEditableNotes(prev => ({
@@ -96,22 +86,18 @@ export default function PrintPreviewPage() {
   }
 
   return (
-    <>
-      {/* 螢幕顯示的控制按鈕 */}
+    <>      {/* 螢幕顯示的控制按鈕 */}
       <div className="print-controls no-print">
         <h1>列印預覽</h1>
         <div className="button-group">
           <button onClick={handlePrint} className="print-button">
             🖨️ 列印 / 儲存為 PDF
           </button>
-          <button onClick={handleBack} className="back-button">
-            ← 返回
-          </button>
         </div>
         <p className="instruction">
           提示：點擊「列印」按鈕，然後在列印對話框中選擇「另存為 PDF」即可生成 PDF 檔案
         </p>
-      </div>      {/* 列印內容 */}
+      </div>{/* 列印內容 */}
       <div className="print-content">
         <div className="document-header">
           <h1>投影片講義</h1>

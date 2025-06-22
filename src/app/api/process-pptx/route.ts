@@ -3,6 +3,8 @@ import JSZip from 'jszip';
 import fs from 'fs/promises';
 import path from 'path';
 import { XMLParser } from 'fast-xml-parser';
+import { checkStorageLimit } from '../storage-cleanup/route';
+import { logger } from '../../../utils/logger';
 
 interface SlideData {
   slideNumber: number;
@@ -13,15 +15,48 @@ interface SlideData {
 const CONVERTER_API_URL = 'http://192.168.0.123:5012';
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  logger.info('開始處理 PPTX 檔案請求', { timestamp: new Date().toISOString() }, 'API');
+
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
+    // 檢查存儲空間
+    logger.debug('檢查存儲空間狀態');
+    const storageStatus = await checkStorageLimit();
+    logger.storage('當前存儲狀態', storageStatus);
     
+    if (!storageStatus.canUpload) {
+      logger.warn('存儲空間已滿，拒絕上傳', storageStatus, 'STORAGE');
+      return NextResponse.json({ 
+        error: `存儲空間已滿，目前使用 ${storageStatus.currentSizeGB}GB / ${storageStatus.maxSizeGB}GB。請稍後再試或聯繫管理員清理空間。` 
+      }, { status: 413 });
+    }
+
+    // 自動清理過期檔案
+    try {
+      logger.debug('執行自動清理過期檔案');
+      await fetch(`${request.nextUrl.origin}/api/storage-cleanup?action=cleanup`, {
+        method: 'GET'
+      });
+      logger.systemAction('自動清理檔案完成');
+    } catch (cleanupError) {
+      logger.warn('自動清理失敗，但繼續處理', cleanupError);
+    }
+
+    const formData = await request.formData();
+    const file = formData.get('file') as File;    
     if (!file) {
+      logger.error('未找到上傳的檔案', null, 'API');
       return NextResponse.json({ error: '沒有找到檔案' }, { status: 400 });
     }
 
+    logger.info('接收到檔案上傳請求', { 
+      fileName: file.name, 
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      fileType: file.type
+    }, 'UPLOAD');
+
     // 步驟 1: 使用外部 API 轉換 PPTX 為圖片
+    logger.debug('準備調用外部轉換 API', { apiUrl: CONVERTER_API_URL });
     const convertFormData = new FormData();
     convertFormData.append('file', file);
 
@@ -32,27 +67,37 @@ export async function POST(request: NextRequest) {
 
     if (!convertResponse.ok) {
       const error = await convertResponse.json();
+      logger.error('外部 API 轉換失敗', { 
+        status: convertResponse.status, 
+        error: error.error 
+      }, 'EXTERNAL_API');
       return NextResponse.json({ 
         error: `轉換失敗: ${error.error || '未知錯誤'}` 
       }, { status: 500 });
-    }    const convertResult = await convertResponse.json();
+    }
+
+    const convertResult = await convertResponse.json();
     const { total_pages, image_download_urls } = convertResult;
     
-    console.log('外部 API 轉換結果:');
-    console.log('- 總頁數:', total_pages);
-    console.log('- 圖片下載 URLs:', image_download_urls);
+    logger.info('外部 API 轉換成功', {
+      totalPages: total_pages,
+      imageUrlsCount: image_download_urls?.length
+    }, 'EXTERNAL_API');
 
-    // 步驟 2: 下載所有圖片到本地
+    logger.debug('轉換結果詳細資料', {
+      totalPages: total_pages,
+      imageDownloadUrls: image_download_urls
+    });    // 步驟 2: 下載所有圖片到本地
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
     
-    // 確保上傳目錄存在
+    logger.debug('確保上傳目錄存在', { uploadDir });
     try {
       await fs.access(uploadDir);
     } catch {
       await fs.mkdir(uploadDir, { recursive: true });
-    }
-
-    // 步驟 3: 提取演講者備註（從原始 PPTX 檔案）
+      logger.info('創建上傳目錄', { uploadDir }, 'SYSTEM');
+    }    // 步驟 3: 提取演講者備註（從原始 PPTX 檔案）
+    logger.debug('開始解析 PPTX 檔案提取備註');
     const buffer = Buffer.from(await file.arrayBuffer());
     const zip = new JSZip();
     await zip.loadAsync(buffer);
@@ -61,10 +106,12 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < total_pages; i++) {
       const slideNumber = i + 1;
-        try {
+      logger.debug(`處理投影片 ${slideNumber}/${total_pages}`);
+      
+      try {
         // 下載圖片
         const imageDownloadUrl = `${CONVERTER_API_URL}${image_download_urls[i]}`;
-        console.log(`下載投影片 ${slideNumber} 圖片:`, imageDownloadUrl);
+        logger.debug(`下載投影片 ${slideNumber} 圖片`, { url: imageDownloadUrl });
         
         const imageResponse = await fetch(imageDownloadUrl);
         
@@ -76,12 +123,15 @@ export async function POST(request: NextRequest) {
         const imageName = `slide_${slideNumber}_${Date.now()}.png`;
         const imagePath = path.join(uploadDir, imageName);
         
-        console.log(`儲存圖片到:`, imagePath);
+        logger.debug(`儲存圖片`, { imageName, imagePath });
         await fs.writeFile(imagePath, new Uint8Array(imageBuffer));
-        const imageUrl = `/uploads/${imageName}`;
-        console.log(`圖片 URL:`, imageUrl);
-
-        // 提取演講者備註
+        
+        // 設置檔案的訪問時間為當前時間（表示剛被創建和訪問）
+        const now = new Date();
+        await fs.utimes(imagePath, now, now);
+        
+        const imageUrl = `/api/uploads/${imageName}`;
+        logger.debug(`圖片儲存完成`, { imageUrl });        // 提取演講者備註
         let notes = '';
         const notesFile = `ppt/notesSlides/notesSlide${slideNumber}.xml`;
         
@@ -96,17 +146,27 @@ export async function POST(request: NextRequest) {
             
             // 提取備註文字
             notes = extractTextFromSlide(notesData) || '';
+            logger.debug(`提取投影片 ${slideNumber} 備註`, { notesLength: notes.length });
           } catch (error) {
-            console.log(`無法解析投影片 ${slideNumber} 的備註:`, error);
+            logger.warn(`無法解析投影片 ${slideNumber} 的備註`, error);
           }
-        }        slides.push({
+        } else {
+          logger.debug(`投影片 ${slideNumber} 沒有備註檔案`);
+        }
+
+        slides.push({
           slideNumber,
           imageUrl,
           notes: notes.trim()
         });
         
-        console.log(`投影片 ${slideNumber} 處理完成:`, { imageUrl, notesLength: notes.trim().length });      } catch (error) {
-        console.error(`處理投影片 ${slideNumber} 時發生錯誤:`, error);
+        logger.info(`投影片 ${slideNumber} 處理完成`, { 
+          imageUrl, 
+          notesLength: notes.trim().length,
+          hasNotes: notes.trim().length > 0
+        });
+      } catch (error) {
+        logger.error(`處理投影片 ${slideNumber} 時發生錯誤`, error);
         // 即使出錯也要添加基本資訊，使用空白圖片路徑
         slides.push({
           slideNumber,
@@ -116,23 +176,37 @@ export async function POST(request: NextRequest) {
               <text x="200" y="150" text-anchor="middle" fill="#666" font-size="16">
                 投影片 ${slideNumber}
               </text>
-            </svg>
-          `).toString('base64')}`,
+            </svg>          `).toString('base64')}`,
           notes: ''
         });
-      }}
+      }
+    }
 
-    console.log('所有投影片處理完成，總數:', slides.length);
-    console.log('最終投影片資料:', slides.map(s => ({ 
+    const processingTime = Date.now() - startTime;
+    logger.info('所有投影片處理完成', {
+      totalSlides: slides.length,
+      processingTimeMs: processingTime,
+      averageTimePerSlide: `${(processingTime / slides.length).toFixed(2)}ms`,
+      slidesWithNotes: slides.filter(s => s.notes.length > 0).length
+    }, 'PROCESSING');
+
+    logger.debug('最終投影片資料', slides.map(s => ({ 
       slideNumber: s.slideNumber, 
       imageUrl: s.imageUrl, 
-      notesLength: s.notes.length 
+      notesLength: s.notes.length,
+      hasNotes: s.notes.length > 0
     })));
+
+    logger.userAction('PPTX 檔案處理完成', {
+      fileName: file.name,
+      totalSlides: slides.length,
+      processingTime: `${(processingTime / 1000).toFixed(2)}s`
+    });
 
     return NextResponse.json({ slides });
 
   } catch (error) {
-    console.error('處理 PPTX 檔案時發生錯誤:', error);
+    logger.error('處理 PPTX 檔案時發生嚴重錯誤', error, 'API');
     return NextResponse.json(
       { error: '處理檔案時發生錯誤' },
       { status: 500 }
