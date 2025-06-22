@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Upload, FileText, Download, Eye } from 'lucide-react';
+import { Upload, FileText, Eye } from 'lucide-react';
 
 interface SlideData {
   slideNumber: number;
@@ -54,35 +54,17 @@ export default function Home() {
     }
   };
 
-  const generatePDF = async () => {
+  const handlePrintPreview = () => {
     if (slides.length === 0) return;
 
-    try {
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ slides }),
-      });
-
-      if (!response.ok) {
-        throw new Error('生成 PDF 時發生錯誤');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = 'handouts.pdf';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('生成 PDF 時發生錯誤:', error);
-      alert('生成 PDF 時發生錯誤，請重試');
+    // 將投影片資料存到 localStorage
+    localStorage.setItem('printSlides', JSON.stringify(slides));
+    
+    // 開啟列印預覽頁面
+    const printWindow = window.open('/print-preview', '_blank');
+    
+    if (!printWindow) {
+      alert('無法開啟列印預覽視窗，請檢查瀏覽器的彈跳視窗設定');
     }
   };
 
@@ -174,11 +156,10 @@ export default function Home() {
                     {previewMode ? '關閉預覽' : '預覽模式'}
                   </button>
                   <button
-                    onClick={generatePDF}
-                    className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    onClick={handlePrintPreview}
+                    className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors"
                   >
-                    <Download className="h-4 w-4" />
-                    下載 PDF
+                    🖨️ 列印預覽
                   </button>
                 </div>
               </div>
@@ -188,22 +169,27 @@ export default function Home() {
                 <div className="space-y-6">
                   {slides.map((slide) => (
                     <div key={slide.slideNumber} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex gap-6">
-                        <div className="flex-1">
-                          <Image
-                            src={slide.imageUrl}
-                            alt={`投影片 ${slide.slideNumber}`}
-                            className="w-full h-auto border border-gray-300 rounded"
-                            width={800}
-                            height={600}
-                          />
-                        </div>
-                        <div className="flex-1">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="flex flex-col">
                           <h3 className="text-lg font-semibold mb-2">
-                            投影片 {slide.slideNumber} - 演講者備註
+                            投影片 {slide.slideNumber}
                           </h3>
-                          <div className="bg-gray-50 p-4 rounded border min-h-[200px]">
-                            <p className="text-gray-700 whitespace-pre-wrap">
+                          <div className="bg-white border border-gray-300 rounded overflow-hidden">
+                            <Image
+                              src={slide.imageUrl}
+                              alt={`投影片 ${slide.slideNumber}`}
+                              className="w-full h-auto max-h-[400px] object-contain"
+                              width={800}
+                              height={600}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex flex-col">
+                          <h3 className="text-lg font-semibold mb-2">
+                            演講者備註
+                          </h3>
+                          <div className="bg-gray-50 p-4 rounded border flex-1 min-h-[200px] max-h-[400px] overflow-y-auto">
+                            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
                               {slide.notes || '此投影片沒有演講者備註'}
                             </p>
                           </div>

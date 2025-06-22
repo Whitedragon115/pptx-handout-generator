@@ -105,17 +105,22 @@ export async function POST(request: NextRequest) {
           notes: notes.trim()
         });
         
-        console.log(`投影片 ${slideNumber} 處理完成:`, { imageUrl, notesLength: notes.trim().length });
-
-      } catch (error) {
+        console.log(`投影片 ${slideNumber} 處理完成:`, { imageUrl, notesLength: notes.trim().length });      } catch (error) {
         console.error(`處理投影片 ${slideNumber} 時發生錯誤:`, error);
-        // 即使出錯也要添加基本資訊
+        // 即使出錯也要添加基本資訊，使用空白圖片路徑
         slides.push({
           slideNumber,
-          imageUrl: `/api/placeholder-slide?slide=${slideNumber}`,
+          imageUrl: `data:image/svg+xml;base64,${Buffer.from(`
+            <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+              <rect width="400" height="300" fill="#f0f0f0" stroke="#ccc"/>
+              <text x="200" y="150" text-anchor="middle" fill="#666" font-size="16">
+                投影片 ${slideNumber}
+              </text>
+            </svg>
+          `).toString('base64')}`,
           notes: ''
         });
-      }    }
+      }}
 
     console.log('所有投影片處理完成，總數:', slides.length);
     console.log('最終投影片資料:', slides.map(s => ({ 
@@ -143,12 +148,12 @@ function extractTextFromSlide(slideData: unknown): string {
     if (typeof obj === 'string') {
       text += obj + ' ';
     } else if (typeof obj === 'object' && obj !== null) {
-      const objRecord = obj as Record<string, unknown>;
-      // 特別尋找文字節點
+      const objRecord = obj as Record<string, unknown>;      // 特別尋找文字節點
       if (objRecord['a:t']) {
-        text += objRecord['a:t'] + ' ';      }
+        text += objRecord['a:t'] + '\n';
+      }
       if (objRecord['#text']) {
-        text += objRecord['#text'] + ' ';
+        text += objRecord['#text'] + '\n';
       }
       
       // 遞迴遍歷所有屬性

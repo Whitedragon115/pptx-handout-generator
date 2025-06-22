@@ -1,0 +1,427 @@
+/* 列印專用樣式 */
+@media print {
+  /* 全域列印設定 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+    /* 確保圖片在列印時顯示 */
+  img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 15px;
+    font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-content {
+    width: 100%;
+    max-width: none;
+  }
+
+  .slides-container {
+    display: block;
+  }
+  .document-header {
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 12px;
+  }
+
+  .document-header h1 {
+    font-size: 22px;
+    margin: 0 0 10px 0;
+    font-weight: bold;
+  }
+
+  .document-header p {
+    margin: 3px 0;
+    font-size: 11px;
+    color: #666;
+  }  .slide-item {
+    margin-bottom: 20px;
+    border: 2px solid #333;
+    border-radius: 6px;
+    padding: 12px;
+    background-color: #fafafa !important;
+    overflow: visible;
+    min-height: 120px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }  /* 上半部：圖片貼左 + 投影片編號置中 */
+  .slide-top-section {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+  }
+
+  .slide-image-section {
+    flex: 0 0 130px;
+    text-align: left;
+  }
+
+  .slide-title {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  /* 下半部：備註文字 */
+  .slide-bottom-section {
+    margin-top: 10px;
+  }
+
+  .slide-notes {
+    background-color: white !important;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;    min-height: 80px;
+    max-height: none;
+    overflow: visible;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .slide-image {
+    width: 130px;
+    height: 100px;
+    object-fit: contain;
+    border: 2px solid #333;
+    border-radius: 4px;
+    background-color: white !important;
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    /* 強制圖片顯示設定 */
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-width: none !important;
+    max-height: none !important;
+    /* 防止圖片被遮擋或截斷 */
+    position: relative;
+    z-index: 10;
+    /* 確保圖片完全載入 */
+    image-rendering: auto;
+    -webkit-image-rendering: auto;
+  }
+
+  .placeholder-image {
+    width: 130px;
+    height: 100px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;    justify-content: center;
+    background-color: #f0f0f0 !important;
+    color: #333;
+    font-size: 10px;
+    font-weight: bold;
+    margin: 0 auto;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }  .slide-notes-section {
+    flex: 1;
+    min-width: 0;
+    padding-left: 10px;
+  }
+
+  .slide-notes-section h4 {
+    font-size: 14px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    color: #555;
+  }
+
+  .slide-notes {
+    background-color: white !important;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 80px;
+    max-height: none;
+    overflow: visible;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .notes-content {
+    font-size: 12px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }  .note-line {
+    margin: 4px 0;
+    padding-left: 12px;
+    text-indent: -12px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+  }
+
+  .no-notes {
+    font-style: italic;
+    color: #999;
+    margin: 0;
+    font-size: 12px;
+  }
+  .document-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+    font-size: 10px;
+    color: #666;
+    page-break-inside: avoid;
+  }
+}
+
+/* 螢幕顯示樣式 */
+@media screen {
+  .print-controls {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .print-controls h1 {
+    margin-bottom: 15px;
+    color: #333;
+  }
+
+  .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .print-button, .back-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+  }
+
+  .print-button {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .print-button:hover {
+    background-color: #0056b3;
+  }
+
+  .back-button {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .back-button:hover {
+    background-color: #545b62;
+  }
+
+  .instruction {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+  }
+
+  .loading-container, .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    text-align: center;
+  }
+
+  .print-content {
+    max-width: 210mm;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+  }
+
+  /* 在螢幕上顯示預覽樣式 */
+  .print-page {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 20px;
+  }  .slide-item {
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    background-color: #fafafa;
+  }  /* 上半部：圖片貼左 + 投影片編號置中 */
+  .slide-top-section {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .slide-image-section {
+    flex: 0 0 130px;
+    text-align: left;
+  }
+
+  .slide-title {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .slide-title h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0;
+    color: #000 !important;
+    padding: 4px 8px;    background-color: #f0f0f0;
+    border-radius: 3px;
+  }
+
+  .slide-image-section {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* 下半部：備註文字 */
+  .slide-bottom-section {
+    margin-top: 10px;
+  }
+
+  .slide-image {
+    width: 130px;
+    height: 100px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .placeholder-image {
+    width: 130px;
+    height: 100px;
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9f9f9;
+    color: #666;
+    font-size: 10px;
+  }  .slide-notes {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 10px;
+    max-height: none;
+    overflow: visible;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .notes-content {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #000 !important;
+  }
+
+  .note-line {
+    margin: 4px 0;
+    padding-left: 12px;
+    text-indent: -12px;
+    color: #000 !important;
+  }
+
+  .no-notes {
+    font-style: italic;
+    color: #666;
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .notes-content {
+    font-size: 12px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .note-line {
+    margin: 4px 0;
+    padding-left: 12px;
+    text-indent: -12px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .no-notes {
+    font-style: italic;
+    color: #999;
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .document-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 15px;
+  }
+
+  .document-header h1 {
+    font-size: 24px;
+    margin: 0 0 10px 0;
+    font-weight: bold;
+  }
+
+  .document-header p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #666;
+  }
+
+  .document-footer {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #ccc;
+    font-size: 12px;
+    color: #666;
+  }
+}
