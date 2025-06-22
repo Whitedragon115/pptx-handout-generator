@@ -12,9 +12,9 @@ interface SlideData {
 
 export default function PrintPreviewPage() {
   const [slides, setSlides] = useState<SlideData[]>([]);
+  const [editableNotes, setEditableNotes] = useState<{ [key: number]: string }>({});
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
-
   useEffect(() => {
     // 從 URL 參數或 localStorage 獲取投影片資料
     const slidesData = searchParams.get('slides');
@@ -22,6 +22,12 @@ export default function PrintPreviewPage() {
       try {
         const decodedSlides = JSON.parse(decodeURIComponent(slidesData));
         setSlides(decodedSlides);
+        // 初始化可編輯備註
+        const initialNotes: { [key: number]: string } = {};
+        decodedSlides.forEach((slide: SlideData) => {
+          initialNotes[slide.slideNumber] = slide.notes || '';
+        });
+        setEditableNotes(initialNotes);
       } catch (error) {
         console.error('解析投影片資料失敗:', error);
       }
@@ -30,7 +36,14 @@ export default function PrintPreviewPage() {
       const storedSlides = localStorage.getItem('printSlides');
       if (storedSlides) {
         try {
-          setSlides(JSON.parse(storedSlides));
+          const decodedSlides = JSON.parse(storedSlides);
+          setSlides(decodedSlides);
+          // 初始化可編輯備註
+          const initialNotes: { [key: number]: string } = {};
+          decodedSlides.forEach((slide: SlideData) => {
+            initialNotes[slide.slideNumber] = slide.notes || '';
+          });
+          setEditableNotes(initialNotes);
         } catch (error) {
           console.error('從 localStorage 獲取投影片資料失敗:', error);
         }
@@ -50,7 +63,12 @@ export default function PrintPreviewPage() {
     }
   }, [loading, slides]);
 
-  const handlePrint = () => {
+  const handleNotesChange = (slideNumber: number, newNotes: string) => {
+    setEditableNotes(prev => ({
+      ...prev,
+      [slideNumber]: newNotes
+    }));
+  };  const handlePrint = () => {
     window.print();
   };
 
@@ -122,23 +140,29 @@ export default function PrintPreviewPage() {
                   <h3>投影片 {slide.slideNumber}</h3>
                 </div>
               </div>
-              
-              {/* 下半部：備註文字 */}
+                {/* 下半部：備註文字 */}
               <div className="slide-bottom-section">
                 <div className="slide-notes">
-                  {slide.notes && slide.notes.trim() ? (
-                    <div className="notes-content">
-                      {slide.notes.split('\n').map((line, lineIndex) => (
+                  <textarea
+                    className="editable-textarea no-print"
+                    value={editableNotes[slide.slideNumber] || ''}
+                    onChange={(e) => handleNotesChange(slide.slideNumber, e.target.value)}
+                    placeholder="點擊此處編輯備註..."
+                  />
+                  {/* 用於列印的內容 */}
+                  <div className="print-only notes-content" style={{ display: 'none' }}>
+                    {editableNotes[slide.slideNumber] && editableNotes[slide.slideNumber].trim() ? (
+                      editableNotes[slide.slideNumber].split('\n').map((line, lineIndex) => (
                         line.trim() && (
                           <p key={lineIndex} className="note-line">
                             • {line.trim()}
                           </p>
                         )
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="no-notes">（無備註）</p>
-                  )}
+                      ))
+                    ) : (
+                      <p className="no-notes">（無備註）</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
